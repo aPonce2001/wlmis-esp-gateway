@@ -98,12 +98,13 @@ void sendActivation()
 
 void sendData()
 {
-    if (!Serial2.available())
+    if (Serial2.available() <= 0)
     {
         return;
     }
 
     String value = Serial2.readStringUntil('\n');
+    value.trim();
     Serial.println(value);
 
     if (value == "sensor-state")
