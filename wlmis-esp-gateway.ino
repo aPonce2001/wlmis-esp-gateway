@@ -16,11 +16,11 @@ enum State
 State currentState = CONNECTING_TO_WIFI;
 
 // WIFI
-const char *ssid = "wlmis";
-const char *password = "wlmis123";
+const char *ssid = "andres";
+const char *password = "andres1234";
 
 // API
-const String server = "http://192.168.200.16:5000/api";
+const String server = "http://192.168.16.222:5000/api";
 
 // HTTP Client
 HTTPClient http;
@@ -29,15 +29,13 @@ void setup()
 {
     Serial.begin(115200);
     Serial2.begin(9600, SERIAL_8N1, RXP2, TXP2);
+    connectToWifi();
 }
 
 void loop()
 {
     switch (currentState)
     {
-    case CONNECTING_TO_WIFI:
-        connectToWifi();
-        break;
     case WAITING_ACTIVATION_STATE:
         waitForActivation();
         break;
@@ -54,11 +52,14 @@ void loop()
 
 void connectToWifi()
 {
+    WiFi.begin(ssid, password);
     Serial.println("Connecting");
     while (WiFi.status() != WL_CONNECTED)
     {
-        continue;
+        Serial.print(".");
+        delay(500);
     }
+    Serial.println("");
     Serial.print("Connected to WiFi network with IP Address: ");
     Serial.println(WiFi.localIP());
     currentState = WAITING_ACTIVATION_STATE;
@@ -66,14 +67,17 @@ void connectToWifi()
 
 void waitForActivation()
 {
-    if (!Serial2.available())
+    if (Serial2.available() > 0)
     {
-        return;
-    }
+        String activation = Serial2.readStringUntil('\n');
+        activation.trim();
+        Serial.println(activation);
 
-    String activation = Serial2.readString();
-    Serial.println(activation);
-    currentState = SENDING_ACTIVATION_STATE;
+        if (activation == "sensor-state")
+        {
+            currentState = SENDING_ACTIVATION_STATE;
+        }
+    }
 }
 
 void sendActivation()
@@ -99,7 +103,7 @@ void sendData()
         return;
     }
 
-    String value = Serial2.readString();
+    String value = Serial2.readStringUntil('\n');
     Serial.println(value);
 
     if (value == "sensor-state")
